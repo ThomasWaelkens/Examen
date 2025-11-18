@@ -1,0 +1,117 @@
+class Batch:
+    def __init__(self, quantity, cost_per_unit):
+        self.quantity = quantity
+        self.cost_per_unit = cost_per_unit
+
+    def __str__(self):
+        return f"Batch(quantity={self.quantity}, cost_per_unit={self.cost_per_unit})"
+
+class Product:
+    def __init__(self, product_name, batches, holding_cost, stockout_penalty):
+        self.product_name = product_name
+        self.batches = []
+        self.holding_cost = holding_cost
+        self.stockout_penalty = stockout_penalty
+
+    def add_batch(self, quantity, cost_per_unit):
+        self.batches.append(Batch(quantity, cost_per_unit))
+
+    def fulfill_demand(self, demand):
+        remaining = demand
+
+        while remaining > 0 and self.batches:  #self.batches is true als die niet leeg is
+            top = self.batches[-1]
+
+            if top.quantity > remaining:
+                top.quantity -= remaining
+                remaining = 0
+            else:
+                remaining -= top.quantity
+                self.batches.pop()
+
+        if remaining == 0:
+            return 0  #omdat het door 1 of meer batches is vervuld, dit blok is na de while loop
+        else:
+            return remaining * self.stockout_penalty
+
+    def calculate_holding_cost(self):
+        total = 0
+        for batch in self.batches:
+            total += batch.quantity * self.holding_cost
+        return total
+
+    def __str__(self):
+        out = f"Product [{self.product_name}]:\n"
+        for batch in self.batches:
+            out += f"{batch}\n"
+        return out.strip()
+
+import random
+import csv
+
+class Inventory_Manager:
+    def __init__(self):
+        self.products = {}    # key = product_name, value = Product-object
+
+    def add_product(self, product_name, holding_cost, stockout_penalty):
+        if product_name in self.products:
+            print(f"Product {product_name} already exists.")
+            return
+
+        self.products[product_name] = Product(product_name, holding_cost, stockout_penalty) #Je steekt hier dus het product met zijn bijhorende attributen in de dictionary
+
+    def restock_product(self, product_name, quantity, cost_per_unit):
+        if product_name not in self.products:
+            print(f"Product {product_name} not found")
+            return
+
+        self.products[product_name].add_batch(quantity, cost_per_unit)
+
+    def simulate_demand(self, min_demand=0, max_demand=20):
+        demand = {} #key: product_name #value: demand
+        for name in self.products: #je gaat alle namen in de stack af en voegt er een random value aan toe tussen 0 en 20
+            demand[name] = random.randint(min_demand, max_demand)
+        return demand
+
+    def simulate_day(self, demand):
+        total_holding_cost = 0
+        total_stockout_cost = 0
+
+        for name, product in self.products.items():
+            # fulfill the daily demand
+            d = demand[name]
+            stockout_cost = product.fulfill_demand(d)
+            total_stockout_cost += stockout_cost
+
+            # add holding cost
+            total_holding_cost += product.calculate_holding_cost()
+
+        return total_holding_cost, total_stockout_cost
+
+    def save_to_csv(self, filename):
+        with open(filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            for name, product in self.products.items():
+                for batch in product.batches:
+                    writer.writerow([name, batch.quantity, batch.cost_per_unit])
+
+    def load_from_csv(self, filename):
+        with open(filename, "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                product_name, qty, cost = row
+                qty = int(qty)
+                cost = float(cost)
+
+                if product_name not in self.products:
+                    # default holding_cost and penalties → not defined in CSV
+                    # assignment says: if not in inventory, simply add them
+                    self.products[product_name] = Product(product_name, 1.0, 5.0)
+
+                self.products[product_name].add_batch(qty, cost)
+
+    def print_inventory(self):
+        print("Current Inventory:")
+        for product in self.products.values():
+            print(product)
+            print()
