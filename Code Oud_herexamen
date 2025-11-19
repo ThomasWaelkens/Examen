@@ -22,6 +22,25 @@ class Player:
 
     def __str__(self):
         return f"{self.name} ({self.number})"
+p1 = Player("Eden Hazard", 10)
+p2 = Player("Moussa Dembele", 19)
+p3 = Player("Jan Vertonghen", 5)
+
+players = [p1, p2, p3]
+
+# Print één van de objecten
+print(p1)
+
+# Test eq methode
+print(p1 == Player("Eden Hazard", 99))  # True → zelfde naam, nummer negeer je
+print(p1 == p2)                          # False
+
+# Test lt methode met sorted()
+sorted_players = sorted(players)
+
+# Print de gesorteerde lijst
+for p in sorted_players:
+    print(p)
 
 #Deel2: Pass
 class Pass:
