@@ -1,3 +1,7 @@
+https://dodona.be/nl/activities/962940240/
+https://dodona.be/nl/activities/947898035/
+https://dodona.be/nl/activities/884707567/
+https://dodona.be/nl/activities/197666654/
 #Deel1: Speler
 class Player:
     def __init__(self, name: str, number: int):
